@@ -513,6 +513,11 @@ const myHistory=async(req,res,next)=>{
             where:{id:customerId},
             include:{
                 model:DB.trip,
+                where: {
+                    date: {
+                      [Op.lt]: (new Date()).getTime()-(2*60*60*1000),
+                    },
+                },
                 include:[
                     {
                         model:DB.cityy,as:'from',attributes:['name']
@@ -968,8 +973,63 @@ const getNews=async(req,res,next)=>{
         next(err);
    }
 };
+const reservation=async(req,res,next)=>{
+    const customerId=req.customerId;
+    try{
+        //validation
+        let isTrue=await validation.isnumber(customerId);
+        if(isTrue!==true){
+            const err=new Error(isTrue);
+            err.statusCode=422;
+            throw err;
+        }
+        //
+        let custmReservations=await DB.customer.findOne({
+            where:{id:customerId},
+            include:{
+                model:DB.trip,
+                where: {
+                    date: {
+                      [Op.gte]: (new Date()).getTime()-(2*60*60*1000),
+                    },
+                },
+                include:[
+                    {
+                        model:DB.cityy,as:'from',attributes:['name']
+                    },{
+                        model:DB.cityy,as:'to',attributes:['name']
+                    }
+                ],
+                through:{
+                    model:DB.reservation,
+                    attributes:['chearNum','numberOfSets','totalPrice']
+                }
+            }
+        });
+        if(custmReservations.trips.length==0){
+            const err=new Error('no reservation found');
+            err.statusCode=404;
+            throw err;
+        }
+        let reservations=custmReservations.trips.map(i=>({
+            tripId:i.id,
+            totalPrice:i.reservation.totalPrice,
+            date:i.date,
+            from:i.from.name,
+            to:i.to.name,
+            numberOfSets:i.reservation.numOfSets,
+            chearNum:i.reservation.chearNum
+        }));
+        res.status(200).json({reservations:reservations});
+    }catch(err){
+        if(!err.statusCode)
+               err.statusCode=500;
+        next(err);
+    }
+};
 
 module.exports={
+    reservation,
     checkPhoneCode,
     register,
     updateProfile,

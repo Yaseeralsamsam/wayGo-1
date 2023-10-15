@@ -16,6 +16,7 @@ route.put('/updateProfile',auth,customerController.updateProfile);
 
 route.get('/home/:goFrom',customerController.home);
 route.get('/myHistory',auth,customerController.myHistory);
+route.get('/reservation',auth,customerController.reservation);
 route.get('/getChear/:tripId',auth,customerController.getChear);
 route.get('/getNews',customerController.getNews);
 
