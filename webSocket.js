@@ -9,7 +9,7 @@ module.exports={
                 methods: ["GET", "POST"],
                 credentials: true 
             },
-            pingTimeout: 60000
+            pingTimeout: 600000
         });
         return socketIo;
     }),

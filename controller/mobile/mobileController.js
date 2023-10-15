@@ -321,7 +321,8 @@ const searchForTrips=async(req,res,next)=>{
     const from=req.body.from;
     const to=  req.body.to;
     var dateFromCustomer=req.body.date;
-    let date=new Date(dateFromCustomer);
+    let date1=new Date(dateFromCustomer);
+    let date=new Date(date1.getFullYear(),date1.getMonth(),date1.getDate(),0,0,0);
     try{
         //validation
         let allStringArr=[from,to];
@@ -489,7 +490,7 @@ const removeBook=async(req,res,next)=>{
         }});
         await tripToRemove.trips[0].removeCustomers(customerToRemove);
         chearArray=chearArray.map(i=>({number:i,isBooked:"no"}));
-        socketIo.getSocket().emit('chearsStatus',{tripId:tripId,chear:chearArray});
+        socketIo.getSocket().emit('chearsStatus',{chearOwnerId:customerId,tripId:tripId,chear:chearArray});
         res.status(200).json({message:"remove success"});
     }catch(err){
         if(!err.statusCode)
@@ -589,6 +590,7 @@ const rateTrip=async(req,res,next)=>{
 };
 const getChear=async(req,res,next)=>{
     const tripId=req.params.tripId;
+    const customerId=req.customerId;
     try{
         //validation
         let isTrue=await validation.isnumber(tripId);
@@ -597,16 +599,39 @@ const getChear=async(req,res,next)=>{
             err.statusCode=422;
             throw err;
         }
+        isTrue=await validation.isnumber(customerId);
+        if(isTrue!==true){
+            const err=new Error(isTrue);
+            err.statusCode=422;
+            throw err;
+        }
         //
         let chearsTrip=await DB.trip.findOne({where:{id:tripId},attributes:['id'],
-            include:{
-            model:DB.chearr,
-            attributes:['number','id'],
-            through:{
-                attributes:['isBooked','bookingDate']
-            }
-            }
+            include:[
+            {
+                model:DB.chearr,
+                attributes:['number','id'],
+                through:{
+                    attributes:['isBooked','bookingDate']
+                }
+            },{
+                model:DB.customer,
+                attributes:['id'],
+                through:{
+                    attributes:['chearNum']
+                }  
+            }]
         });
+        let customerChear=[];
+        if(chearsTrip.customers.length!=0)
+            for(let i=0;i<chearsTrip.customers.length;i++){
+                if(chearsTrip.customers[i].id==customerId){
+                    (chearsTrip.customers[i].reservation.chearNum.
+                        slice(',')).
+                        map(j=>{customerChear.push(j);});
+                    break;
+                }
+            }
         //chearTrip this variable to send it to client in res
         let chearTrip=chearsTrip.chears;
         
@@ -630,7 +655,7 @@ const getChear=async(req,res,next)=>{
             return {number:i.number,isBooked:'no'};
         });
         // web socket send chear:[number,isBooked:]
-        socketIo.getSocket().emit('chearsStatus',{tripId:tripId,chear:reopenChear});
+        socketIo.getSocket().emit('chearsStatus',{chearOwnerId:'',tripId:tripId,chear:reopenChear});
         //
         chearTrip=chearTrip.map(i=>{
             return{
@@ -638,6 +663,7 @@ const getChear=async(req,res,next)=>{
             };
         });
             res.status(200).json({
+                myChear:customerChear,
                 chear:chearTrip
             });
     }catch(err){
@@ -648,10 +674,11 @@ const getChear=async(req,res,next)=>{
 };
 const cancelBookChear=async(req,res,next)=>{
   const tripId=req.body.tripId;
-  const chear=req.body.chear; 
+  const chear=req.body.chear;
+  const customerId=req.customerId;
   try{
     // validation
-    let allNumberArr=[tripId,...chear];
+    let allNumberArr=[tripId,...chear,customerId];
     for(let i=0;i<allNumberArr.length;i++){
         let isTrue=await validation.isnumber(allNumberArr[i]);
         if(isTrue!==true){
@@ -686,7 +713,7 @@ const cancelBookChear=async(req,res,next)=>{
     // web socket send chear:[number,isBooked:]
     let chearToCancel=tripChear.chears;
     chearToCancel=chearToCancel.map(i=>({number:i.number,isBooked:"no"}));
-    socketIo.getSocket().emit('chearsStatus',{tripId:tripId,chear:chearToCancel});
+    socketIo.getSocket().emit('chearsStatus',{chearOwnerId:customerId,tripId:tripId,chear:chearToCancel});
     res.status(200).json({message:'cancel success'});
 }catch(err){
     if(!err.statusCode)
@@ -696,10 +723,11 @@ const cancelBookChear=async(req,res,next)=>{
 };
 const bookChear=async(req,res,next)=>{
     const tripId=req.body.tripId;
-    let chear=req.body.chear;    
+    let chear=req.body.chear; 
+    const customerId=req.customerId;
     try{
         // validation
-        let allNumberArr=[tripId,...chear];
+        let allNumberArr=[tripId,...chear,customerId];
         for(let i=0;i<allNumberArr.length;i++){
             let isTrue=await validation.isnumber(allNumberArr[i]);
             if(isTrue!==true){
@@ -741,7 +769,7 @@ const bookChear=async(req,res,next)=>{
         await tripp.addChears(chears,{through:{ isBooked:"isBooking",bookingDate:after15Minutes}});
         // web socket send chear:[number,isBooked:]
         chear=chear.map(i=>({number:i,isBooked:"isBooking"}));
-        socketIo.getSocket().emit('chearsStatus',{tripId:tripId,chear:chear});
+        socketIo.getSocket().emit('chearsStatus',{chearOwnerId:customerId,tripId:tripId,chear:chear});
         res.status(200).json({message:"chears are in booking status"}); 
     }catch(err){
         if(!err.statusCode)
@@ -750,6 +778,7 @@ const bookChear=async(req,res,next)=>{
     }
 };
 const submitBooking=async(req,res,next)=>{
+    const customerId    =req.customerId        ;
     const paymentId     =req.body.paymentId    ;
     const terminalId    =req.body.terminalId   ;
     const paymentType   =req.body.paymentType  ;
@@ -763,7 +792,7 @@ const submitBooking=async(req,res,next)=>{
         // validation
         let custmersInfo=[];
         let iss=[];
-        let allNumberArr=[terminalId,tripId,numberOfSets,totalPrice,...chear];
+        let allNumberArr=[customerId,terminalId,tripId,numberOfSets,totalPrice,...chear];
         for(let i=0;i<customers.length;i++){
             iss.push(customers[i].iss);
             custmersInfo.push(customers[i].firstName);
@@ -875,7 +904,7 @@ const submitBooking=async(req,res,next)=>{
         reopenChear=reopenChear.map(i=>{
             return {number:i.number,isBooked:'no'};
         });
-        socketIo.getSocket().emit('chearsStatus',{chear:reopenChear});
+        socketIo.getSocket().emit('chearsStatus',{chearOwnerId:'',tripId:tripId,chear:reopenChear});
         const err=new Error('time of bookin chears is end please rebook chears');
         err.statusCode=401;
         throw err;
@@ -921,7 +950,7 @@ const submitBooking=async(req,res,next)=>{
         }});
         await tripp.addChears(chear,{through:{isBooked:"yes",bookingDate:((new Date()).getTime())+(3*60*60*1000)}});
         let chearToObject=chear.map(i=>({number:i,isBooked:"yes"}));
-        socketIo.getSocket().emit('chearsStatus',{tripId:tripId,chear:chearToObject});
+        socketIo.getSocket().emit('chearsStatus',{chearOwnerId:customerId,tripId:tripId,chear:chearToObject});
         res.status(201).json({message:"booking submited success"});
     }catch(err){
         if(!err.statusCode)

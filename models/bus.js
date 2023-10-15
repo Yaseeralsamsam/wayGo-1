@@ -19,8 +19,7 @@ const sequelize=require('sequelize');
         },
         numberOfBus:{
             type:sequelize.STRING,
-            allowNull:false,
-            unique:true
+            allowNull:false
         }
     });
 module.exports=bus;

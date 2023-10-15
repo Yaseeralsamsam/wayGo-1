@@ -51,7 +51,6 @@ const deleteAvailabelTrip=tripController.deleteAvailabelTrip;
 const getValidTrips=tripController.getValidTrips;
 const addTrip=tripController.addTrip;
 const getCustomersInTrip=tripController.getCustomersInTrip;
-const getPDF=tripController.getPDF;
 const cancelBookChear=tripController.cancelBookChear;
 ///////Bus///////
 const getBuses=busController.getBuses;
@@ -76,6 +75,5 @@ module.exports={
     getValidTrips,
     addTrip,
     getCustomersInTrip,
-    getPDF,
     getBusesNumberAndCities
 };

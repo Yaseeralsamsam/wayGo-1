@@ -7,7 +7,6 @@ route.get('/getOldTrips',auth.company,companyController.getOldTrips);
 route.get('/getValidTrips',auth.company,companyController.getValidTrips);
 route.get('/getChear/:tripId',auth.company,companyController.getChear);
 route.get('/getCustomersInTrip/:tripId',auth.company,companyController.getCustomersInTrip);
-route.get('/getPDF/:tripId',auth.company,companyController.getPDF);
 
 route.delete('/deleteOldTrip/:tripId',auth.company,companyController.deleteOldTrip);
 route.delete('/deleteAvailabelTrip/:tripId',auth.company,companyController.deleteAvailabelTrip);

@@ -123,6 +123,7 @@ const addBus=async(req,res,next)=>{
                     attributes:['id']
                 }
             });
+            
             if(!getCompany.company){
                     const err=new Error('error');
                     err.statusCode=404;
