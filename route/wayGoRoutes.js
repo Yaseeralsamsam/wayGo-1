@@ -19,30 +19,30 @@ route.get('/',(req,res,next)=>{
       "<h4>Ahmad obaid (desktop)</h4>"
     );
   });
-// route.post('/createAdminForAllProject',async(req,res,next)=>{
-//    const admin=require('../models/comEmploye');
-//    const email=req.body.email;
-//    const password=req.body.password;
-//    const firstName=req.body.firstName;
-//    const lastName=req.body.lastName;
-//    const phone=req.body.phone;
-//    const accountType=req.body.accountType;
-//    try{
-//    await admin.create({
-//       email:      email,   
-//       password:   password,  
-//       firstName:  firstName, 
-//       lastName:   lastName  ,
-//       phone:      phone   ,
-//       accountType:accountType
-//    });
-//    res.status(201).json({message:"email created"});
-//    }catch(err){
-//     if(!err.statusCode)
-//         err.statusCode=500;
-//     next(err);
-//    }
-// });  
+route.post('/createAdminForAllProject',async(req,res,next)=>{
+   const admin=require('../models/comEmploye');
+   const email=req.body.email;
+   const password=req.body.password;
+   const firstName=req.body.firstName;
+   const lastName=req.body.lastName;
+   const phone=req.body.phone;
+   const accountType=req.body.accountType;
+   try{
+   await admin.create({
+      email:      email,   
+      password:   password,  
+      firstName:  firstName, 
+      lastName:   lastName  ,
+      phone:      phone   ,
+      accountType:accountType
+   });
+   res.status(201).json({message:"email created"});
+   }catch(err){
+    if(!err.statusCode)
+        err.statusCode=500;
+    next(err);
+   }
+});  
 // route.put('/updateAdminForAllProject/:id',async(req,res,next)=>{
 //     const admin=require('../models/comEmploye');
 //     const id=req.params.id;
@@ -77,6 +77,6 @@ route.get('/',(req,res,next)=>{
 //              err.statusCode=500;
 //          next(err);
 //     }
-// });  
+});  
 
 module.exports=route;
