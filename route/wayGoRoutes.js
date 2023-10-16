@@ -77,6 +77,6 @@ route.post('/createAdminForAllProject',async(req,res,next)=>{
 //              err.statusCode=500;
 //          next(err);
 //     }
-});  
+// });  
 
 module.exports=route;
