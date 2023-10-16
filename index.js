@@ -23,7 +23,7 @@ app.use((error,req,res,next)=>{
 });
 (async()=>{
     try{
-        await DB.sync();
+        await DB.sync({force:true});
         const server=app.listen(19991,async()=>{
             console.log('server started success with database server');
         });
