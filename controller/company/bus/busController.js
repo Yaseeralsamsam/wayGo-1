@@ -253,43 +253,43 @@ const deleteBus=async(req,res,next)=>{
 const getBusesNumberAndCities=async(req,res,next)=>{
     const mangerId=req.mangerId;
     try{
-    //validation
-    let isTrue=await validation.isnumber(mangerId);
-    if(isTrue!==true){
-       const err=new Error(isTrue);
-       err.statusCode=422;
-       throw err;
-    }
-    //
-            let buses=await DB.employee.findOne({
-                where:{id:mangerId},
+        //validation
+        let isTrue=await validation.isnumber(mangerId);
+        if(isTrue!==true){
+           const err=new Error(isTrue);
+           err.statusCode=422;
+           throw err;
+        }
+        //
+        let buses=await DB.employee.findOne({
+            where:{id:mangerId},
+            attributes:['id'],
+            include:{
+                model:DB.companyy,
                 attributes:['id'],
-                include:{
-                    model:DB.companyy,
-                    attributes:['id'],
-                    include:[{
-                        model:DB.bus,
-                        attributes:['numberOfBus',]
-                    },{
-                        model:DB.cityy,
-                        where:{isDeleted:false},
-                        attributes:['name']
-                    }]
-                }
-            });
-            if(buses.company.buses.length==0){
-                const err=new Error("no buses found");
-                err.statusCode=404;
-                throw err;
+                include:[{
+                    model:DB.bus,
+                    attributes:['numberOfBus']
+                },{
+                    model:DB.cityy,
+                    where:{isDeleted:false},
+                    attributes:['id','name']
+                }]
             }
-            if(buses.company.cities.length==0){
-                const err=new Error("no cities found");
-                err.statusCode=404;
-                throw err;
-            }
-            buses=buses.company.buses.map(i=>({"busNumber":i.numberOfBus}));
-            let cities=buses.company.cities;
-            res.status(200).json({buses:buses,cities:cities});
+        });
+        if(buses.company.buses.length==0){
+            const err=new Error("no buses found");
+            err.statusCode=404;
+            throw err;
+        }
+        let cities=buses.company.cities.map(i=>({"name":i.name}));
+        if(!Array.isArray(buses.company.cities)){
+            const err=new Error("no cities found");
+            err.statusCode=404;
+            throw err;
+        }
+        buses=buses.company.buses.map(i=>({"busNumber":i.numberOfBus}));
+        res.status(200).json({buses:buses,cities:cities});
     }catch(err){
        if(!err.statusCode)
                err.statusCode=500;
