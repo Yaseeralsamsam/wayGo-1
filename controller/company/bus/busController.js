@@ -282,12 +282,12 @@ const getBusesNumberAndCities=async(req,res,next)=>{
             err.statusCode=404;
             throw err;
         }
-        let cities=buses.company.cities.map(i=>({"name":i.name}));
         if(!Array.isArray(buses.company.cities)){
             const err=new Error("no cities found");
             err.statusCode=404;
             throw err;
         }
+        let cities=buses.company.cities.map(i=>({"name":i.name}));
         buses=buses.company.buses.map(i=>({"busNumber":i.numberOfBus}));
         res.status(200).json({buses:buses,cities:cities});
     }catch(err){
